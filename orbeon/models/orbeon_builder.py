@@ -200,18 +200,18 @@ class OrbeonBuilder(models.Model):
             raise ValidationError("%s already has a record with version: %d"
                                   % (self.name, self.version))
 
-    def validate_create_xml(self, vals):
-        if vals.get('builder_template_id', False) and vals.get('xml', False):
-            raise ValidationError("Provide either a \"Builder Form Template\" or XML. Both not allowed.")
-
-        if not vals.get('builder_template_id', False) and not vals.get('xml', False):
-            raise ValidationError("Missing either a \"Builder Form Template\" or XML")
+    def validate_create_xml(self, vals_list):
+        for vals in vals_list:
+            if vals['builder_template_id'] and vals['xml']:
+                raise ValidationError("Provide either a \"Builder Form Template\" or XML. Both not allowed.")
+            if not vals['builder_template_id'] and not vals['xml']:
+                raise ValidationError("Missing either a \"Builder Form Template\" or XML")
 
     @api.model_create_multi
     def create(self, vals_list):
         self.validate_create_xml(vals_list)
 
-        if vals_list.get('builder_template_id', False):
+        if vals_list[0]['builder_template_id']:
             template = self.env['orbeon.builder.template'].browse(vals_list['builder_template_id'])
             root = etree.fromstring(template.xml)
         elif 'xml' in vals_list:
